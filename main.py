@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from feeStruct import getFeeDetail, feeStructure, setbookfee, getWholeDetail, typeOfFee,DelFeeStruct, fetchFeeStructure, fetchBookFee, DelBookFee, setFright, delFright, DepositeFees, DeleteData, FancyShow
 from studentType import checkStudentType, NormaliseText, CapitalizeText, monthIntext, Fright
+from siblings import SiblingClass
 
 schoolMonth = ["Apr","May","June","July","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"]
 
@@ -94,14 +95,34 @@ elif option == '2':
     FancyShow(name, standard)
     
 elif option == '3':
+
+    nameI = NormaliseText(input("Name: "))
+    standardI = int(input("Class: "))
+
+    data = collection.find_one({"Name": nameI,"Class":standardI})
+    SiblingObject = SiblingClass(data["Father Name"], data["Mother Name"], data["Village"])
+    response = SiblingObject.CheckSibling()
     fetchNo = int(input("How many months of fee you want to fetch\n: "))
     FeeObject = typeOfFee()
-    showFee = FeeObject.customMonth(NormaliseText(input("Name: ")),int(input("Class: ")),fetchNo)
-    print(showFee[0])
+
+    if response == None:
+        showFee = FeeObject.customMonth(nameI, standardI,fetchNo)
+        print(showFee[0])
+    else:
+        TotalAmount = 0
+        month = None
+        for key in response:
+            showFee = FeeObject.customMonth(key, response[key], fetchNo)
+            TotalAmount = TotalAmount+showFee[1]
+            print(f"{CapitalizeText(key)}\n{showFee[0]}")
+            month = showFee[2]
+        print(TotalAmount, month)
+        
 elif option == '4':
     DepoObject = DepositeFees(NormaliseText(input("Name: ")), int(input("Class: ")))
     # DepoObject.UpdateFeePreText()
-    DepoObject.DepositAndBalanceHandling()
+    # DepoObject.DepositAndBalanceHandling()
+    DepoObject.SiblingVerification()
 
 elif option == '5':
     options = NormaliseText(input("[S]et Fright\n[D]elete Fright\nSelect Letter: "))

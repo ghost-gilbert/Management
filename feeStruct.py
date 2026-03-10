@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from studentType import monthIntext, NormaliseText, CapitalizeText, Fright, DepositOnMongo, FetchPreviousDeposit, FetchBalance, FetchPaidMonth
 from time import localtime
+from siblings import SiblingClass, FeeVerification
 
 client = MongoClient('mongodb+srv://khc07979_db_user:5Ld8806ZCHOuayLp@claust.3gj3ip7.mongodb.net/?appName=Claust')
 
@@ -229,12 +230,14 @@ class typeOfFee:
         showMonth = month   # 4
         month = FetchPaidMonth(name, standard)+month
         toTal = self.totalfee(name, standard)
-        if month > 12:
+        if month >= 12:
             leftMonth = 12-FetchPaidMonth(name,standard) 
+            if leftMonth==0:
+                print(f"All Fees Paid for the session {session}")
             print(f"Only {leftMonth} Month Fees left to pay in this Session of {session}")
             return [f"--> {leftMonth} month = {((toTal[0]*12) + toTal[1])-PreviousPaidAmount}\n '--> till {monthIntext(12)}",None]
         else:
-            return [f"--> {showMonth} month = {((toTal[0]*month) + toTal[1])-PreviousPaidAmount}\n '--> till {monthIntext(month)}",((toTal[0]*month) + toTal[1])-PreviousPaidAmount]
+            return [f"'--> {showMonth} month = {((toTal[0]*month) + toTal[1])-PreviousPaidAmount}\n '--> till {monthIntext(month)}",((toTal[0]*month) + toTal[1])-PreviousPaidAmount,monthIntext(month)]
 
     def customMonthRaw(self, name, standard, month):
         toTal = self.totalfee(name, standard)
@@ -252,6 +255,7 @@ class DepositeFees(typeOfFee):
     def UpdateFeePreText(self):
         paidMonth = getPaidMonth(self.name,self.standard)
         if paidMonth == 12:
+            FeeVerification(self.name, self.standard)
             return None
         DepoAmount = int(input("Enter the Deposit Amount: "))
         previosDeposit = FetchPreviousDeposit(self.name, self.standard)
@@ -278,7 +282,49 @@ class DepositeFees(typeOfFee):
             extraAmount = super().customMonthRaw(self.name, self.standard, paidMonth)
             RefinedAmount = amount[1]-previosDeposit
             RefinedExtraAmount = extraAmount[1]-previosDeposit
-            print(f"{RefinedAmount+balance} for {paidMonth-1}th month can be paid currently")
+            if paidMonth==0:
+                print(f"{RefinedAmount+balance} for Admission can be paid currently")
+            else:
+                print(f"{RefinedAmount+balance} for {paidMonth-1}th month can be paid currently")
+            print(f"but {RefinedExtraAmount+balance} for {paidMonth}th month can be paid if the deposit amounts are increased")
+            return [RefinedAmount+balance,RefinedExtraAmount+balance,paidMonth, DepoAmount]
+    
+    def SiblingUpdateFeePreText(self, CollectedAmount, otherSibling):
+        paidMonth = getPaidMonth(self.name,self.standard)
+        if paidMonth == 12:
+            FeeVerification(self.name, self.standard)
+            return None
+        DepoAmount = int(input(f"Left: ({CollectedAmount-otherSibling}) Enter the Deposit Amount: "))
+        while DepoAmount>CollectedAmount-otherSibling:
+            DepoAmount = int(input(f"Amount is greater than the collective deposit (only {collectedAmount-otherSibling})\nPlease re-enter the deposit value: "))
+        previosDeposit = FetchPreviousDeposit(self.name, self.standard)
+        balance = FetchBalance(self.name, self.standard)
+        MixPay = DepoAmount+previosDeposit
+        ToBePaid = 0
+        while ToBePaid<=MixPay:
+            MonthFetch = super().customMonthRaw(self.name, self.standard, paidMonth)
+            ToBePaid = MonthFetch[1]
+            if ToBePaid>=MixPay:
+                break
+            if paidMonth==12:
+                print("Deposited Amount is More than the Total Amount\nSo the fee for this session has been closed\nLeft amount will be returned to the customer")
+                break
+            paidMonth = paidMonth+1
+
+        if DepoAmount>(ToBePaid-previosDeposit):
+            amount = super().customMonthRaw(self.name, self.standard, paidMonth)
+            RefinedAmount = amount[1]-previosDeposit
+            print(f"{RefinedAmount+balance} is left in the session {session}")
+            return [RefinedAmount+balance,paidMonth, DepoAmount, None]
+        else:
+            amount = super().customMonthRaw(self.name, self.standard, paidMonth-1)
+            extraAmount = super().customMonthRaw(self.name, self.standard, paidMonth)
+            RefinedAmount = amount[1]-previosDeposit
+            RefinedExtraAmount = extraAmount[1]-previosDeposit
+            if paidMonth!=0:
+                print(f"{RefinedAmount+balance} for {paidMonth-1}th month can be paid currently")
+            else:
+                print(f"{RefinedAmount+balance} for Admission can be paid currently")
             print(f"but {RefinedExtraAmount+balance} for {paidMonth}th month can be paid if the deposit amounts are increased")
             return [RefinedAmount+balance,RefinedExtraAmount+balance,paidMonth, DepoAmount]
     
@@ -293,7 +339,8 @@ class DepositeFees(typeOfFee):
             leftAmount = PreValue[2]-PreValue[0]
             print(f"Amount to Return {leftAmount}")
         else:
-            option = NormaliseText(input("[F]ull Payment\n[P]artial Payment\n:- "))
+            # [RefinedAmount+balance,RefinedExtraAmount+balance,paidMonth, DepoAmount]
+            option = NormaliseText(input(f"[F]ull Payment {PreValue[0]}\n[P]artial Payment {PreValue[3]}\n:- "))
             if option == 'p':
                 DepositOnMongo(self.name, self.standard, PreValue[3])
                 balanceAmount = PreValue[1]-PreValue[3]
@@ -304,7 +351,61 @@ class DepositeFees(typeOfFee):
                 admission.find_one_and_update({"Name":self.name,"Class":self.standard},{"$set":{"Paid Month":PreValue[2]}})
                 admission.find_one_and_update({"Name":self.name,"Class":self.standard},{"$set":{"Balance":0}})
 
+    def SiblingDepositAndBalanceHandling(self, PreValue):
+        if PreValue == None:
+            print(f"All Fees paid for session {session}")
+        elif PreValue[3]==None:
+            DepositOnMongo(self.name, self.standard, PreValue[0])
+            admission.find_one_and_update({"Name":self.name,"Class":self.standard},{"$set":{"Paid Month":PreValue[1]}})
+            admission.find_one_and_update({"Name":self.name,"Class":self.standard},{"$set":{"Balance":0}})
+            leftAmount = PreValue[2]-PreValue[0]
+            print(f"Amount to Return {leftAmount}")
+        else:
+            # option = NormaliseText(input("[F]ull Payment\n[P]artial Payment\n:- "))
+            option = NormaliseText(input(f"[F]ull Payment {PreValue[2]}\n[P]artial Payment {PreValue[3]}\n:- "))
+            if option == 'p':
+                DepositOnMongo(self.name, self.standard, PreValue[3])
+                balanceAmount = PreValue[1]-PreValue[3]
+                admission.find_one_and_update({"Name":self.name,"Class":self.standard},{"$set":{"Balance":balanceAmount}})
+                admission.find_one_and_update({"Name":self.name,"Class":self.standard},{"$set":{"Paid Month":PreValue[2]}})
+            else:
+                DepositOnMongo(self.name, self.standard, PreValue[0])
+                admission.find_one_and_update({"Name":self.name,"Class":self.standard},{"$set":{"Paid Month":PreValue[2]}})
+                admission.find_one_and_update({"Name":self.name,"Class":self.standard},{"$set":{"Balance":0}})
+                if PreValue[3]>PreValue[0]:
+                    return PreValue[3]-PreValue[0]
 
+    def SiblingVerification(self):
+        data = admission.find_one({"Name": self.name,"Class":self.standard})
+        SiblingObject = SiblingClass(data["Father Name"], data["Mother Name"], data["Village"])
+        response = SiblingObject.CheckSibling()
+        if response == None:
+            self.UpdateFeePreText()
+        else:
+            CollectiveDeposit = int(input("Enter the total deposit amount: "))
+            Values = {}
+            otherSibling = 0
+            for key in response:
+                # key = name, response[key] = class
+                self.name = key
+                self.standard = response[key]
+                updateInfo = self.SiblingUpdateFeePreText(CollectiveDeposit,otherSibling)
+                if updateInfo == None:
+                    pass
+                elif updateInfo[3] == None:
+                    otherSibling = otherSibling+updateInfo[2]
+                else:
+                    otherSibling = otherSibling+updateInfo[3]
+                Values.update({self.name:updateInfo})
+                ExtraMoney = self.SiblingDepositAndBalanceHandling(updateInfo)
+                if ExtraMoney != None:
+                    CollectiveDeposit = CollectiveDeposit+ExtraMoney
+            print(f"{Values}")
+            if CollectiveDeposit==otherSibling:
+                pass
+            else:
+                print(f"Left Amount: {CollectiveDeposit-otherSibling}")
+        
 class DeleteData:
     def __init__(self, name, standard):
         self.name = name
