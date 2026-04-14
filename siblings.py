@@ -1,5 +1,10 @@
 from pymongo import MongoClient
-client = MongoClient('mongodb+srv://khc07979_db_user:5Ld8806ZCHOuayLp@claust.3gj3ip7.mongodb.net/?appName=Claust')
+import os
+from dotenv import load_dotenv, dotenv_values, set_key
+
+load_dotenv()
+client = MongoClient(os.getenv('mongo_db'))
+
 db = client['Management-database']
 admission = db['admission']
 
@@ -11,6 +16,16 @@ class SiblingClass:
 
     def CheckSibling(self):
         rawData = admission.find({"Father Name":self.father,"Mother Name":self.mother,"Village":self.village})
+        TempList = []
+        for i in rawData:
+            TempList.append(i['_id'])
+        if len(TempList) == 1:
+            return None
+        else:
+            return TempList
+    
+    def CheckSiblingName(self):
+        rawData = admission.find({"Father Name":self.father,"Mother Name":self.mother,"Village":self.village})
         TempDict = {}
         for i in rawData:
             TempDict.update({i['Name']:i['Class']})
@@ -18,6 +33,12 @@ class SiblingClass:
             return None
         else:
             return TempDict
+    
+def giveSibling(ID):
+    StudentData = admission.find_one({"_id":ID})
+    TempSibObj = SiblingClass(StudentData['Father Name'],StudentData['Mother Name'],StudentData['Village'])
+    siblings = TempSibObj.CheckSiblingName()
+    return siblings
     
 def FeeVerification(name, std):
     student = admission.find_one({"Name":name,"Class":std})

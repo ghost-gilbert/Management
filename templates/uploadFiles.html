@@ -1,0 +1,117 @@
+{%extends 'index.html'%}
+
+{%block content%}
+<style>
+    #content{
+        font-family: 'Poppins',sans-serif;
+        display: flex;
+        justify-content: center;
+        height: 100%;
+    }
+    main{
+        overflow-y: initial !important;
+        position: relative;
+    }
+    #sidebar-width{
+        height: 100%;
+    }
+    .documents .container {
+        margin: 0.5rem 0;
+    }
+</style>
+    <input type="text" id="identity" value="{{uniqueId}}" hidden>
+    <div class="form">
+        <h1 class="Section-Heading">Required Documents</h1>
+        <div class="documents section">
+            <div class="container">
+                <div class="text">
+                    <h4>Income Certificate</h4>
+                    <p>Income certificate of the candidate must be valid and updated.</p>
+                </div>
+                <div class="file flex">
+                    <ion-icon name="document-outline" id="income-certificate" class="uploadIcon"></ion-icon>
+                </div>
+                <button value="income-certificate" class="confirmUpload">
+                    <ion-icon name="cloud-upload-outline" class="confirmUploadIcon"></ion-icon>
+                </button>
+            </div>
+            <div class="container">
+                <div class="text" style="background-color: bisque;">
+                    <h4>Caste Certificate</h4>
+                    <p>Income certificate of the candidate must be valid and updated.</p>
+                </div>
+                <div class="file flex">
+                    <ion-icon name="document-outline" id="caste-certificate" class="uploadIcon"></ion-icon>
+                </div>
+                <button value="caste-certificate" class="confirmUpload">
+                    <ion-icon name="cloud-upload-outline" class="confirmUploadIcon"></ion-icon>
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const uploadIcon = document.getElementsByClassName('uploadIcon')
+        const confirmUpload = document.getElementsByClassName('confirmUpload')
+        const uploadContainer = document.getElementsByClassName('file')
+
+        let selectedFile = {}
+        Array.from(uploadIcon).forEach((certificate, index)=>{
+            // console.log(certificate)
+            // console.log(`${certificate.id} This is the ID`)
+            certificate.addEventListener('click',()=>{
+                let newElement = document.createElement('input')
+                document.body.appendChild(newElement)
+                newElement.type = 'file'
+                newElement.accept = '.jpeg,.jpg,.png,.svg'
+                newElement.id=certificate.id
+                newElement.setAttribute('name','file')
+                console.log(uploadContainer)
+                console.log(newElement)
+                newElement.click()
+
+                newElement.onchange = ()=>{
+                    selectedFile[index] = newElement.files[0]
+                    console.log(selectedFile)
+
+                }
+            })
+        })
+
+        console.log(confirmUpload)
+
+        Array.from(confirmUpload).forEach((eachUploadBtn, index) =>{
+            console.log("Loop Chala")
+            
+            eachUploadBtn.addEventListener('click',()=>{
+                console.log(eachUploadBtn)
+                
+                let location = eachUploadBtn.value
+                let file = selectedFile[index]
+                let formData = new FormData()
+                let ids = document.getElementById('identity')
+                console.log("Click Bhi Chala")
+                // console.log(location)
+                // console.log(fileInput)
+                console.log(file)
+                formData.append('file',file)
+                formData.append('location', location)
+                formData.append('fileName', file.name)
+                formData.append('ID', ids.value)
+                console.log(formData)
+                async function uploadFile() {
+                    let data = await fetch('http://127.0.0.1:5000/file-upload',{
+                        method: 'POST',
+                        body: formData
+
+                    })
+                    let response = await data.json()
+                    return response
+                }
+                uploadFile().then(res=>{
+                    console.log("File Successfully Uploaded")
+                })
+            })
+        })
+
+    </script>
+{%endblock%}

@@ -1,0 +1,104 @@
+{%extends "index.html"%}
+
+{%block content%}
+<style>
+    #content{
+        font-family: 'Poppins',sans-serif;
+    }
+
+    #content select, input{
+        font-size: 1.4rem;
+    }
+    main{
+        overflow-y: initial !important;
+        position: relative;
+    }
+    #sidebar-width{
+        height: 100%;
+    }
+</style>
+<div id="registration-panel">
+    <form class="form" id="submitForm" action="{{url_for('acceptform')}}" method="post">
+        <h1 class="Section-Heading">Personal Detail</h1>
+        <div class="personal section">
+            <div class="container">
+                <label for="student">Student Name</label>
+                <input type="text" name="Name" id="student" required>
+            </div>
+            <div class="container">
+                <label for="father">Father Name</label>
+                <input type="text" name="Father Name" id="father" required>
+            </div>
+            <div class="container">
+                <label for="mother">Mother Name</label>
+                <input type="text" name="Mother Name" id="mother">
+            </div>
+            <div class="container">
+                <label for="class">Class</label>
+                <select name="Class" id="class" required>
+                    <option value="NUR">NUR</option>
+                    <option value="LKG">LKG</option>
+                    <option value="UKG">UKG</option>
+                    <option value="1">1st</option>
+                    <option value="2">2nd</option>
+                    <option value="3">3rd</option>
+                    <option value="4">4th</option>
+                    <option value="5">5th</option>
+                    <option value="6">6th</option>
+                    <option value="7">7th</option>
+                    <option value="8">8th</option>
+                    <option value="9">9th</option>
+                    <option value="10">10th</option>
+                    <option value="11">11th</option>
+                    <option value="12">12th</option>
+                    <option value="" hidden disabled selected></option>
+                </select>
+            </div>
+            <div class="container">
+                <label for="dob">Date of Birth</label>
+                <input type="date" name="DOB" id="dob" pattern="\d{2}/d{2}/d{4}" required>
+            </div>
+            <div class="container">
+                <label for="studenttype">Student Type</label>
+                <select name="Student Type" id="studenttype" required>
+                    <option value="old">Old</option>
+                    <option value="new">New</option>
+                </select>
+            </div>
+        </div>
+        
+        <h1 class="Section-Heading">Contact Detail</h1>
+        <div class="contact section">
+            <div class="container">
+                <label for="village">Village</label>
+                <input type="text" name="Village" id="village" required>
+            </div>
+            <div class="container">
+                <label for="mobile">Mobile No.</label>
+                <input type="number" name="Mobile No" id="mobile" required>
+            </div>
+            <div class="container">
+                <label for="freight">Freight if Any</label>
+                <select name="Freight" id="freight">
+                    <option value="t">Transport</option>
+                    <option value="l" selected>Local</option>
+                </select>
+            </div>
+        </div>
+        <h1 class="Section-Heading">Identification Detail</h1>
+        <div class="govt-identification section">
+            <div class="container">
+                <label for="aadhar">Aadhar No.</label>
+                <input type="number" name="Aadhar No" id="aadhar">
+            </div>
+            <div class="container">
+                <label for="pen">PEN No.</label>
+                <input type="number" name="PEN No" id="pen">
+            </div>
+        </div>
+        <p class="note-careful">Note: Please verify the details correctly because this data in this form will not be changed in the future after Submittion</p>
+        <input onclick="" class="submit-btn center" type="submit" value="Submit">
+    </form>
+</div>
+
+{%endblock%}

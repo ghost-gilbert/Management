@@ -1,0 +1,202 @@
+{%extends 'index.html'%}
+
+{%block content%}
+<style>
+    #content {
+        display: flex;
+        justify-content: center;
+    }
+
+    main #content {
+        width: 100%;
+        overflow-y: scroll;
+        scrollbar-width: thin;
+    }
+</style>
+<div id="width-control">
+    <div class="heading-container">
+        <h2>Class</h2>
+        <div class="classList">
+            <li class="ls-rmv" name="NUR"><span>NUR</span></li>
+            <li class="ls-rmv" name="LKG"><span>LKG</span></li>
+            <li class="ls-rmv" name="UKG"><span>UKG</span></li>
+            <li class="ls-rmv" name="1"><span>1st</span></li>
+            <li class="ls-rmv" name="2"><span>2nd</span></li>
+            <li class="ls-rmv" name="3"><span>3rd</span></li>
+            <li class="ls-rmv" name="4"><span>4th</span></li>
+            <li class="ls-rmv" name="5"><span>5th</span></li>
+            <li class="ls-rmv" name="6"><span>6th</span></li>
+            <li class="ls-rmv" name="7"><span>7th</span></li>
+            <li class="ls-rmv" name="8"><span>8th</span></li>
+            <li class="ls-rmv" name="9"><span>9th</span></li>
+            <li class="ls-rmv" name="10"><span>10th</span></li>
+            <li class="ls-rmv" name="11"><span>11th</span></li>
+            <li class="ls-rmv" name="12"><span>12th</span></li>
+        </div>
+    </div>
+    <div class="two-section-grid">
+        <div class="input-section">
+            <div class="keyValuePair">
+                <!-- <div class="input-box"> -->
+                <!-- <label for="feeName">Fees Name</label> -->
+                <input type="text" id="feeName" placeholder="Fees Name">
+                <!-- </div> -->
+                <!-- <div class="input-box"> -->
+                <span>:</span>
+                <!-- </div> -->
+                <!-- <div class="input-box"> -->
+                <!-- <label for="feeAmount">Fees Amount</label> -->
+                <input type="number" id="feeAmount" placeholder="Fees Amount">
+                <!-- </div> -->
+            </div>
+            <select name="feeType" id="feeType">
+                <option value="o">One Time Fee</option>
+                <option value="m">Monthly Fee</option>
+            </select>
+            <button class="submit-btn" id="insert-btn">Insert</button>
+        </div>
+        <div class="output-section" id="insertBox">
+            
+        </div>
+    </div>
+</div>
+
+<script>
+    const classList = document.getElementsByClassName('classList')
+    const listSpans = classList[0].getElementsByTagName('li')
+    const inserBtn = document.getElementById('insert-btn')
+
+    Array.from(listSpans).forEach(element => {
+        element.addEventListener('click', () => {
+            // If want to select only one class
+            // Array.from(listSpans).forEach(element=>{
+            //     element.classList.remove('selected-class')
+            // })
+            element.classList.toggle('selected-class')
+        })
+    })
+
+    async function fetchFeeStructure() {
+        let data = await fetch('http://127.0.0.1:5000/fetchFeeStructure', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        let response = await data.json()
+        return response
+    }
+
+    inserBtn.addEventListener('click', () => {
+        let selectedItemsList = document.getElementsByClassName('selected-class')
+        let FeesName = document.getElementById('feeName').value
+        let FeesAmount = document.getElementById('feeAmount').value
+        let FeeType = document.getElementById('feeType').value
+        let Class = [];
+        console.log(FeesName, FeesAmount, FeeType)
+        console.log(selectedItemsList)
+        Array.from(selectedItemsList).forEach(element => {
+            Class.push(element.getAttribute('name'))
+        })
+        console.log(Class)
+        if (Class.length == 0) {
+            return ConveyMessage({ "At least select one class": "error" })
+        }
+        async function createFeeStructure() {
+            let data = await fetch("http://127.0.0.1:5000/createFeeStructure", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    class: Class,
+                    feeName: FeesName,
+                    feeAmount: FeesAmount,
+                    feeType: FeeType
+                })
+            })
+
+            let response = await data.json()
+            return response
+        }
+
+        createFeeStructure().then(res => {
+            // ConveyMessage(res['result'])
+            window.location.reload()
+        })
+    })
+
+    const randomRgbColor = () => {
+        const r = Math.floor(Math.random() * 256);
+        const g = Math.floor(Math.random() * 256);
+        const b = Math.floor(Math.random() * 256);
+        return `rgb(${r}, ${g}, ${b}, 0.3)`;
+    };
+
+    async function deleteBookStructure(std) {
+        let deletedElement = await fetch("http://127.0.0.1:5000/deleteFeeStructure", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                std: std
+            })
+        })
+        let response = await deletedElement.json()
+        return response
+    }
+
+    fetchFeeStructure().then(res => {
+
+        let insertBox = document.getElementById('insertBox')
+        res['result'].forEach(element => {
+            let randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16);
+            valueArray = ['One Time Fee Detail', 'Monthly Fee Detail']
+            insertBox.insertAdjacentHTML("beforeend", `<div style="background: ${randomRgbColor()};" class="documentContainer">
+                <ion-icon name="trash-outline" id='${element['Class']}' class="deleteBtnFeeStruct"></ion-icon>
+                            <h2>Class: ${element['Class']}</h2>
+                        </div>`)
+            valueArray.forEach(miniHeadings => {
+                toIternate = element[miniHeadings]
+                let Keys = Object.keys(toIternate)
+                let value = Keys.map(key => {
+                    return toIternate[key]
+
+                })
+
+
+                let documentContainer = insertBox.lastChild
+                console.log(documentContainer)
+                documentContainer.insertAdjacentHTML("beforeend", `<ul class="ulOfdocument"></ul>`)
+                let ulOfdocument = documentContainer.getElementsByClassName('ulOfdocument')
+                console.log(ulOfdocument[0])
+                for (let index = 0; index < Keys.length; index++) {
+                    const keyElement = Keys[index];
+                    const valueElement = value[index];
+                    ulOfdocument[0].insertAdjacentHTML("beforeend", `<li>${keyElement}: ${valueElement}</li>`)
+                }
+            })
+        })
+
+
+        const deleteBtn = document.getElementsByClassName('deleteBtnFeeStruct')
+        Array.from(deleteBtn).forEach(element => {
+            element.addEventListener('click', () => {
+                deleteBookStructure(element.getAttribute('id')).then(res => {
+                    // ConveyMessage(res['result'])
+                    window.location.reload()
+                }).catch(err => {
+                    ConveyMessage({ "Some Error Occured": 'error' })
+                })
+            })
+        })
+        // listSpans.forEach(element => {
+
+        // });
+    })
+
+
+</script>
+
+{%endblock %}

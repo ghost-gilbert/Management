@@ -1,0 +1,182 @@
+{%extends 'index.html'%}
+
+{%block content%}
+<style>
+    #content {
+        display: flex;
+        justify-content: center;
+    }
+
+    main #content {
+        width: 100%;
+        overflow-y: scroll;
+        scrollbar-width: thin;
+    }
+
+    #width-control {
+        min-width: 60%;
+    }
+
+    .keyValuePair {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 50%;
+    }
+
+    h4{
+        width: 80%;
+        font-weight: 700;
+    }
+</style>
+<div id="width-control">
+    <div class="heading-container">
+        <h2>Address</h2>
+    </div>
+    <div class="two-section-grid">
+        <div class="input-section">
+            <div class="keyValuePair">
+                <!-- <div class="input-box"> -->
+                <!-- <label for="feeName">Fees Name</label> -->
+                <input type="text" id="village" placeholder="Village">
+                <!-- </div> -->
+                <!-- <div class="input-box"> -->
+                <span>:</span>
+                <!-- </div> -->
+                <!-- <div class="input-box"> -->
+                <!-- <label for="feeAmount">Fees Amount</label> -->
+                <input type="number" id="feeAmount" placeholder="Fees Amount">
+                <!-- </div> -->
+            </div>
+            <button class="submit-btn" id="insert-btn">Insert</button>
+        </div>
+        <div class="output-section" id="insertBox">
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const inserBtn = document.getElementById('insert-btn')
+
+    async function fetchbusStructure() {
+        let data = await fetch('http://127.0.0.1:5000/fetchbusCharge', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        let response = await data.json()
+        return response
+    }
+
+    inserBtn.addEventListener('click', () => {
+        let FeesAmount = document.getElementById('feeAmount').value
+        let Village = document.getElementById('village').value;
+        // Array.from(selectedItemsList).forEach(element => {
+        //     Class.push(element.getAttribute('name'))
+        // })
+        if (Village == "" || FeesAmount == 0) {
+            return ConveyMessage({ "Enter the Village Name": "error" })
+        }
+        async function createbusStructure() {
+            let data = await fetch("http://127.0.0.1:5000/createbusCharge", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    village: Village,
+                    feeAmount: FeesAmount
+                })
+            })
+
+            let response = await data.json()
+            return response
+        }
+
+        createbusStructure().then(res => {
+            // ConveyMessage(res['result'])
+            window.location.reload()
+        })
+    })
+
+    const randomRgbColor = () => {
+        const r = Math.floor(Math.random() * 256);
+        const g = Math.floor(Math.random() * 256);
+        const b = Math.floor(Math.random() * 256);
+        return `rgb(${r}, ${g}, ${b}, 0.3)`;
+    };
+
+    async function deletebusCharge(objID) {
+        let deletedElement = await fetch("http://127.0.0.1:5000/deletebusCharge", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                objID: objID
+            })
+        })
+        let response = await deletedElement.json()
+        return response
+    }
+
+    fetchbusStructure().then(res => {
+
+        let insertBox = document.getElementById('insertBox')
+        let result = res['result']
+        result.forEach(elements => {
+            let key = Object.keys(elements)
+            let value = Object.values(elements)
+            Array.from(key).forEach(element => {
+                if (element != "_id") {
+                    console.log(key)
+                    console.log(value)
+                    let randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16);
+                    insertBox.insertAdjacentHTML("beforeend", `<div style="background: ${randomRgbColor()};" class="documentContainer">
+                    <ion-icon name="trash-outline" id='${elements['_id']}' class="deleteBtnFeeStruct"></ion-icon>
+                                <h4>Vill: ${key[1].toUpperCase()}</h4>
+                            </div>`)
+                    console.log(result)
+
+                    // res['result'].forEach(miniHeadings => {
+                    //     toIternate = miniHeadings
+                    //     let Keys = Object.keys(toIternate)
+                    //     let value = Keys.map(key => {
+                    //         return toIternate[key]
+
+                    //     })
+
+
+                    let documentContainer = insertBox.lastChild
+                    console.log(documentContainer)
+                    documentContainer.insertAdjacentHTML("beforeend", `<ul class="ulOfdocument"></ul>`)
+                    let ulOfdocument = documentContainer.getElementsByClassName('ulOfdocument')
+                    console.log(ulOfdocument[0])
+                    ulOfdocument[0].insertAdjacentHTML("beforeend", `<li>Freight: ${value[1]}</li>`)
+                    // for (let index = 0; index < Keys.length; index++) {
+                    //     const keyElement = Keys[index];
+                    //     const valueElement = value[index];
+                    // }
+                }
+            })
+        })
+
+        const deleteBtn = document.getElementsByClassName('deleteBtnFeeStruct')
+        console.log(deleteBtn)
+        Array.from(deleteBtn).forEach(element => {
+            element.addEventListener('click', () => {
+                deletebusCharge(element.getAttribute('id')).then(res => {
+                    // ConveyMessage(res['result'])
+                    window.location.reload()
+                }).catch(err => {
+                    ConveyMessage({ "Some Error Occured": 'error' })
+                })
+            })
+        })
+    })
+
+
+</script>
+{%endblock%}

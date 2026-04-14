@@ -1,0 +1,78 @@
+<div id="sidebar-width">
+    <div class="sidebar">
+        <div class="flex">
+            <span class="navigating-text">Navigation</span>
+            <ion-icon name="reload-circle-outline" class="icon"></ion-icon>
+        </div>
+        <ul>
+            <li class="ls-rmv"><a href="/Registration" class="td-rmv"><img
+                        src="{{url_for('static',filename='add.png')}}" alt="">Entry</a></li>
+            <li class="ls-rmv">
+                <div class="flex find-btn pointer">
+                    <a href="#" class="td-rmv"><img src="{{url_for('static',filename='search.png')}}" alt="">Find</a>
+                    <ion-icon name="chevron-down" id="dropdown-icon"></ion-icon>
+                </div>
+                <div id="find-menu" class="dnone">
+                    <form class="find-container action=" {{url_for("FindStudent")}}" method="post">
+                        <input class="input-find" type="text" name="Name" id="name-field" placeholder="Student Name">
+                        <select class="input-find" name="Class"  id="class-field" aria-placeholder="Class" required>
+                            <option class="placeholder" value="Class" selected hidden disabled>Class</option>
+                            <option value="" selected>All Class</option>
+                            <option value="NUR">NUR</option>
+                            <option value="LKG">LKG</option>
+                            <option value="UKG">UKG</option>
+                            <option value="1">1st</option>
+                            <option value="2">2nd</option>
+                            <option value="3">3rd</option>
+                            <option value="4">4th</option>
+                            <option value="5">5th</option>
+                            <option value="6">6th</option>
+                            <option value="7">7th</option>
+                            <option value="8">8th</option>
+                            <option value="9">9th</option>
+                            <option value="10">10th</option>
+                            <option value="11">11th</option>
+                            <option value="12">12th</option>
+                        </select>
+                    </form>
+                </div>
+            </li>
+            <li class="ls-rmv"><a href="/feeStructure" class="td-rmv"><img
+                        src="{{url_for('static',filename='structure.png')}}" alt="">Fees Structure</a></li>
+            <li class="ls-rmv"><a href="/bookcharge" class="td-rmv"><img src="{{url_for('static',filename='book.png')}}"
+                        alt="">Book Charge</a></li>
+            <li class="ls-rmv"><a href="/buscharge" class="td-rmv"><img src="{{url_for('static',filename='bus.png')}}"
+                        alt="">Bus Charge</a></li>
+            <li class="ls-rmv"><a href="/settings" class="td-rmv"><img src="{{url_for('static',filename='setting.png')}}"
+                        alt="">Settings</a></li>
+            <li class="ls-rmv"><a href="/files" class="td-rmv"><img src="{{url_for('static',filename='setting.png')}}"
+                        alt="">dFiles</a></li>
+        </ul>
+    </div>
+</div>
+<script>
+    const findButton = document.getElementsByClassName('find-btn')
+    const findMenu = document.getElementById('find-menu')
+    const dropdownIcon = document.getElementById('dropdown-icon')
+    const findFieds = document.getElementsByClassName('input-find')
+    const reloadIcon = document.getElementsByClassName('icon')
+
+    console.log(findFieds)
+
+    findButton[0].addEventListener("click", () => {
+        findMenu.classList.toggle("dnone");
+    })
+
+    findButton[0].addEventListener("click", () => {
+        dropdownIcon.classList.toggle("rotate180")
+    })
+
+    // reloadIcon[0].addEventListener('mousedown', () => {
+    //     setTimeout(()=>{
+    //         reloadIcon[0].classList.add('longpress')
+    //         window.location.reload()
+    //         // console.log('Whispering Deaths')
+    //     }, 3000)
+    // })
+
+</script>

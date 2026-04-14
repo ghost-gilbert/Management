@@ -1,0 +1,270 @@
+{%extends 'index.html'%} {%block content%}
+<style>
+  #content {
+    display: flex;
+    justify-content: center;
+  }
+</style>
+<span id="userID" hidden>{{siblingsDict['userID']}}</span>
+<div class="mainSpace">
+  <div class="studentInfo">
+    <h2 id="studentName">{{siblingsDict['Name']}}</h2>
+    <div class="student_photo">
+      <img class="photo" src="{{url_for('static',filename='photograph/kumarharsh.jpg')}}" alt="#" />
+      <div class="fields big-field">
+        <span class="key big-key">Class</span>
+        <span class="value big-value">{{siblingsDict['Class']}}</span>
+      </div>
+    </div>
+    <h3 class="sibling-heading">Siblings</h3>
+    <div class="studentDetail">
+      {%if siblingsDict['sibs'] == None %}
+      <span class="value">No Siblings</span>
+      {%else %}
+      {%for names in siblingsDict['sibs'] %}
+      <span class="value">{{names}}</span>
+      {%endfor%}
+      {%endif %}
+    </div>
+  </div>
+  <div class="paymentDetail">
+    <h2>Session 2026-27</h2>
+    <div class="dataBox">
+      <div class="specialDataRow flex">
+        <span class="head">Month</span>
+        <div class="flex">
+          <select name="month" id="month-selection">
+            {%for monthNo, monthName in siblingsDict['payingMonths'].items()%}
+            <option value="{{monthNo}}">{{monthNo}} - {{monthName}}</option>
+            {%endfor %}
+          </select>
+          <ion-icon class="arrowDecor" name="arrow-forward-outline" id="go-arrow"></ion-icon>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="paymentButtons">
+    <!-- <h1>Buttons</h1> -->
+    <a href="#" class="center-button td-rmv">Pay</a>
+    <!-- <br /> -->
+    <a href="#" id="alternate-button" class="td-rmv">Partial Pay</a>
+    <div id="input-container" class="visibility">
+      <ion-icon name="caret-up-outline" class="pointerArrow"></ion-icon>
+      <ion-icon name="close-outline" class="close-btn-pp"></ion-icon>
+      <input type="number" name="amount" id="AmountNo" placeholder="Amount">
+      <button id="partial-pay-btn">Pay</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const goBtn = document.getElementById("go-arrow");
+  const monthNumber = document.getElementById("month-selection");
+  // const studentName = document.getElementById('studentName')
+  const userID = document.getElementById("userID");
+  // const standard = document.getElementsByClassName('big-value')
+  const dataBox = document.getElementsByClassName("dataBox");
+  const pay = document.getElementsByClassName("center-button");
+  const partialPay = document.getElementById("alternate-button");
+  const partialPayMenu = document.getElementById("input-container");
+  const closeBtn = document.querySelector(".close-btn-pp");
+  const partialPayBtn = document.getElementById('partial-pay-btn')
+  const AmountNumber = document.getElementById('AmountNo')
+
+  let ID = userID.innerText;
+
+  function removeAddIconAndField(res) {
+    let dataRows = document.getElementsByClassName("dataRow");
+
+    Array.from(dataRows).forEach((element) => {
+      element.remove();
+    });
+    iterateObj(res);
+    goBtn.classList.remove("icon-simple-rotation");
+    goBtn.setAttribute("name", "sync-outline");
+  }
+
+  async function getMonthlyFeeData() {
+    let data = await fetch("http://127.0.0.1:5000/month", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ID: ID,
+        fetchNo: monthNumber.value,
+      }),
+    });
+    let response = await data.json();
+    return response;
+  }
+
+  function iterateObj(aJsonObj) {
+    if (aJsonObj == null) {
+      dataBox[0].insertAdjacentHTML(
+        "beforeend",
+        `<span class='nothingFound-small dataRow'>No Data Found</span>`,
+      );
+    }
+    else {
+      for (const [key, value] of Object.entries(aJsonObj)) {
+        dataBox[0].insertAdjacentHTML(
+          "beforeend",
+          `<div class='dataRow flex' id='${key}'><span class='head'>${key}</span><span class='data'>${value}</span></div>`,
+        );
+      }
+    }
+  }
+
+  let isFirstClick = true;
+
+  goBtn.addEventListener("click", () => {
+    if (isFirstClick == true) {
+      goBtn.setAttribute("name", "aperture-outline");
+      goBtn.classList.add("icon-simple-rotation");
+      getMonthlyFeeData()
+        .then((res) => {
+          removeAddIconAndField(res);
+          // goBtn.classList.add('refetch-data')
+          isFirstClick = false;
+        })
+        .catch((error) => {
+          removeAddIconAndField(null);
+        });
+    } else {
+      goBtn.setAttribute("name", "aperture-outline");
+      goBtn.classList.add("icon-simple-rotation");
+      getMonthlyFeeData()
+        .then((res) => {
+          removeAddIconAndField(res);
+        })
+        .catch((error) => {
+          print()
+          removeAddIconAndField(null);
+        });
+    }
+  });
+
+  pay[0].addEventListener("click", () => {
+    let paidMonthBox = document.getElementById("Paid Month");
+    let paidMonthText = paidMonthBox.getElementsByClassName("data")[0].innerText;
+    if (paidMonthText == null) {
+      return { "result": "error" }
+    }
+
+    async function payFunction() {
+      let response = await fetch("http://127.0.0.1:5000/payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ID: ID,
+          paidMonthtxt: paidMonthText,
+          option: "p",
+        }),
+      });
+      let data = await response.json();
+      return data;
+    }
+
+    payFunction().then(res => {
+
+      function messageEruption(element, text) {
+        if (element == "success") {
+          showStatus(JSON.stringify(text), 'success')
+        } else if (element == "error") {
+          showStatus(JSON.stringify(text), 'error')
+        } else {
+          showStatus(JSON.stringify(text), 'message')
+        }
+
+      }
+
+      responseObject = res['result']
+      let values = Object.keys(responseObject)
+      let keys = values.map(x => responseObject[x])
+      // console.log(keys)
+      // console.log(values)
+      time = 0
+
+      for (let index = 0; index < keys.length; index++) {
+        const element = keys[index];
+
+        const showText = values[index];
+        // console.log(element, showText)
+        setTimeout(() => messageEruption(element, showText), time)
+        time = time + 1000
+      }
+
+    }).catch(error => {
+      showStatus(error, 'error')
+    })
+  });
+
+  partialPay.addEventListener('click', () => {
+    partialPayMenu.classList.toggle('visibility')
+  })
+
+  partialPayBtn.addEventListener('click', () => {
+    let paidMonthBox = document.getElementById("Paid Month");
+    let paidMonthText = paidMonthBox.getElementsByClassName("data")[0].innerText;
+
+    partialPayMenu.classList.toggle('visibility')
+
+    async function PartialPayment(amount) {
+      let data = await fetch("http://127.0.0.1:5000/partialPayment", {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          ID: ID,
+          paidMonthtxt: paidMonthText,
+          Amount: amount,
+        })
+      })
+
+      let response = await data.json()
+      return response
+    }
+
+    PartialPayment(AmountNumber.value).then(res => {
+      function messageEruption(element, text) {
+        if (element == "success") {
+          showStatus(JSON.stringify(text), 'success')
+        } else if (element == "error") {
+          showStatus(JSON.stringify(text), 'error')
+        } else {
+          showStatus(JSON.stringify(text), 'message')
+        }
+
+      }
+
+      responseObject = res['result']
+      let values = Object.keys(responseObject)
+      let keys = values.map(x => responseObject[x])
+      // console.log(keys)
+      // console.log(values)
+      time = 0
+
+      for (let index = 0; index < keys.length; index++) {
+        const element = keys[index];
+
+        const showText = values[index];
+        // console.log(element, showText)
+        setTimeout(() => messageEruption(element, showText), time)
+        time = time + 1000
+      }
+    })
+  })
+
+
+  closeBtn.addEventListener('click', () => {
+    partialPayMenu.classList.toggle('visibility')
+  })
+
+
+
+</script>
+{%endblock%}

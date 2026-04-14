@@ -1,0 +1,130 @@
+{%block content%}
+<!-- <div class="containmentUnit">
+    <div class="hoverBox">
+        <div class="stripRelative">
+            <div class="left-status-content flex">
+                <ion-icon name="alert-circle-outline" class="status-icon changed-icon"></ion-icon>
+                <span class="status-text">Network Connection Interrupted</span>
+            </div>
+            <div class="time-stripe"></div>
+            <div class="right-status-content flex">
+                <button class="specific-btn">Try Again</button>
+                <ion-icon name="close-outline" class="status-icon close-icon"></ion-icon>
+            </div>
+        </div>
+    </div>
+</div> -->
+<!-- <div class="hoverBox" style="background-color: var(--bs-success);">
+    <div class="left-status-content flex">
+        <ion-icon name="checkmark-circle-outline" class="status-icon changed-icon"></ion-icon>
+        <span class="status-text">Data Successfully Modified</span>
+    </div>
+    <div class="right-status-content flex">
+        <button class="specific-btn">Done</button>
+        <ion-icon name="close-outline" class="status-icon close-icon"></ion-icon>
+    </div>
+</div> -->
+<script>
+
+    function showStatus(statusText, statusType) {
+        console.log("Shuruat")
+
+        console.log("Element Wala")
+        const ErrorhoverElement = `<div class="containmentUnit">
+            <div class="hoverBox">
+                <div class="stripRelative">
+                    <div class="left-status-content flex">
+                        <ion-icon name="alert-circle-outline" class="status-icon changed-icon"></ion-icon>
+                        <span class="status-text">${statusText}</span>
+                        </div>
+                        <div class="time-stripe"></div>
+                        <div class="right-status-content flex">
+                            <button class="specific-btn">Try Again</button>
+                            <ion-icon name="close-outline" class="status-icon close-icon"></ion-icon>
+                            </div>
+                            </div>
+                            </div>
+                            </div>`
+
+        console.log("Auto Removal Wala")
+        function autoremoval() {
+            Array.from(closeBtn).forEach(closeElements => {
+                Array.from(hoverBox).forEach(element => {
+                    element.classList.add('minusTenPercent')
+                });
+            });
+        }
+
+
+
+        console.log("Body Aur Set Interval")
+        const bodyElement = document.getElementsByTagName('body')
+        bodyElement[0].insertAdjacentHTML("beforeend", ErrorhoverElement)
+
+        const closeBtn = document.getElementsByClassName('close-icon')
+        const hoverBox = document.getElementsByClassName('hoverBox')
+        const changedIcn = hoverBox[hoverBox.length - 1].getElementsByClassName('changed-icon')
+        const specificBtn = hoverBox[hoverBox.length - 1].getElementsByClassName('specific-btn')
+        // const specificBox = document.getElementById(`hover-${statusType}`)
+        const timeBar = hoverBox[hoverBox.length - 1].getElementsByClassName('time-stripe')
+
+        if (statusType == 'error') {
+            hoverBox[hoverBox.length - 1].style.backgroundColor = "#bb0202"
+            changedIcn[0].setAttribute('name', "alert-circle-outline")
+        }
+        else if (statusType == 'success') {
+            hoverBox[hoverBox.length - 1].style.backgroundColor = "#198754"
+            changedIcn[0].setAttribute('name', "checkmark-circle-outline")
+            specificBtn[0].innerHTML = 'Done'
+        }
+        else {
+            hoverBox[hoverBox.length - 1].style.backgroundColor = "#0dcaf0"
+            changedIcn[0].setAttribute('name', "notifications-outline")
+        }
+
+        requestAnimationFrame(() => {
+            timeBar[0].classList.add('reducingWidth')
+        })
+        setTimeout(autoremoval, 5000)
+
+        console.log("Close Button Wala")
+        Array.from(closeBtn).forEach(closeElements => {
+            closeElements.addEventListener('click', () => {
+                Array.from(hoverBox).forEach(element => {
+                    element.classList.add('minusTenPercent')
+                });
+            })
+        });
+    }
+
+    function ConveyMessage(resultantObject) {
+        function messageEruption(element, text) {
+            if (element == "success") {
+                showStatus(JSON.stringify(text), 'success')
+            } else if (element == "error") {
+                showStatus(JSON.stringify(text), 'error')
+            } else {
+                showStatus(JSON.stringify(text), 'message')
+            }
+
+        }
+
+        responseObject = resultantObject
+        let values = Object.keys(responseObject)
+        let keys = values.map(x => responseObject[x])
+        // console.log(keys)
+        // console.log(values)
+        time = 0
+
+        for (let index = 0; index < keys.length; index++) {
+            const element = keys[index];
+
+            const showText = values[index];
+            // console.log(element, showText)
+            setTimeout(() => messageEruption(element, showText), time)
+            time = time + 1000
+        }
+    }
+
+</script>
+{%endblock%}

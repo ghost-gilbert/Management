@@ -1,0 +1,221 @@
+{%extends 'index.html'%} {%block content%}
+<div id="data-table" class="table"></div>
+
+<script src="https://unpkg.com/tabulator-tables@6.4.0/dist/js/tabulator.min.js"></script>
+
+<script>
+    const tableElement = document.getElementById('data-table')
+    const excelIcon = document.getElementById('xlsx')
+    const nameField = document.getElementById('name-field')
+    const classField = document.getElementById('class-field')
+
+    let tabledata = {{ ValueDict | tojson}}
+
+    console.log(tableElement)
+    console.log(tabledata)
+
+    let emptyArray = {}
+
+    if (tabledata == null) {
+        tableElement.innerHTML = "<span class='center nothingFound'>No Records Found</span>"
+    }
+    else if (tabledata['length'] == 0) {
+        tableElement.innerHTML = "<span class='center nothingFound'>No Records Found</span>"
+    }
+    else {
+        var cellContextMenu = [
+            {
+                label: `<ion-icon name="folder-outline" class='internalIcon'></ion-icon> Files`,
+                action: function (e, row) {
+                    // Get row data as dictionary
+                    let rowData = row.getData();
+                    console.log(rowData['_id']);
+                    async function uploadFile() {
+                        let data = await fetch(`http://127.0.0.1:5000/files?id=${encodeURIComponent(rowData['_id'])}`)
+                    }
+                    uploadFile()
+                    window.location.href = `http://127.0.0.1:5000/files?id=${encodeURIComponent(rowData['_id'])}`
+
+                }
+            },
+            {
+                label: `<ion-icon name="logo-paypal" class='internalIcon'></ion-icon> Pay`,
+                action: function (e, row) {
+
+                    // Get row data as dictionary
+                    let rowData = row.getData();
+                    console.log(rowData);
+
+                    let name = encodeURIComponent(rowData['Name'])
+                    let std = encodeURIComponent(rowData['Class'])
+                    let ID = rowData['_id']
+
+                    window.location.href = `http://127.0.0.1:5000/pay?name=${name}&class=${std}&ID=${ID}`
+
+                }
+            },
+            {
+                separator: true
+            },
+            {
+                label: "<ion-icon name='infinite-outline' class='internalIcon'></ion-icon> Refresh",
+                action: function (e, row) {
+
+                    // Get row data as dictionary
+                    let rowData = row.getData();
+
+                    console.log(rowData);
+                }
+            },
+            {
+                separator: true
+            },
+            {
+                label: `<ion-icon name="person-remove-outline" class='internalIcon'></ion-icon> Delete Student`,
+                action: function (e, row) {
+
+                    // Get row data as dictionary
+                    let rowData = row.getData();
+
+
+                    async function deleteStudent(ID, key) {
+                        let response = await fetch("http://127.0.0.1:5000/delete/student", {
+                            method: "POST",  // or DELETE
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                ID: ID
+                            })
+                        });
+                        let data = await response.text();
+                        return data
+                    }
+
+                    let recieved = deleteStudent(rowData["_id"])
+                }
+            },
+            {
+                label: `<ion-icon name="trash-outline" class='internalIcon'></ion-icon> Delete Cell`,
+                action: function (e, cell) {
+
+                    // Get row data as dictionary
+                    let cellData = cell.getData();
+                    let cellDataVal = cell.getValue();
+                    let cellDataKey = cell.getField();
+
+                    // console.log(cellDataVal, cellDataKey);
+                    async function deleteCell(ID, key) {
+                        let response = await fetch("http://127.0.0.1:5000/delete/cell", {
+                            method: "POST",  // or DELETE
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                ID: ID,
+                                key: key
+                            })
+                        });
+                        let data = await response.text();
+                        return data
+                    }
+
+                    deleteCell(cellData["_id"], cellDataKey).catch(error=>{
+                        
+                    })
+                }
+            }
+        ]
+
+        var table = new Tabulator("#data-table", {
+            // height: 75, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+            // rowHeight: 40,
+            title: 'mainSheet',
+            data: tabledata, //assign data to table
+            layout: "fitData", //fit columns to width of table (optional)
+            movableRows: true,
+            columnDefaults: {
+                contextMenu: cellContextMenu,   // applies to ALL columns
+            },
+            columns: [
+                { title: "ID", field: "_id" },
+                { title: "Name", field: "Name", width: 200 },
+                { title: "Father's Name", field: "Father Name" },
+                { title: "Mother's Name", field: "Mother Name" },
+                { title: "Village", field: "Village" },
+                { title: "Date Of Birth", field: "Date of Birth", sorter: "date", hozAlign: "center" },
+                { title: "Mobile No.", field: "Mobile No" },
+                { title: "Aadhar No.", field: "Aadhar No" },
+                { title: "PEN No.", field: "PEN No" },
+                { title: "Class", field: "Class" },
+                { title: "Computer Charge", field: "Computer Charge" },
+                { title: "Accessories", field: "Accessories" },
+                { title: "Maintainance", field: "Maintainance" },
+                { title: "Monthly Fee", field: "Monthly Fee" },
+                { title: "Book Charge", field: "Book Charge" },
+                { title: "Freight", field: "Freight Fee" },
+                { title: "Total", field: "Total" },
+                { title: "Balance", field: "Balance" },
+                {
+                    title: "Deposit",
+                    field: "Deposit",
+                    formatter: function (cell) {
+                        try {
+                            let data = cell.getValue();
+                            
+                            let valueArray = Object.values(data)
+                            let displayString = valueArray.join("+")
+    
+                            return displayString;
+                            
+                        } catch (error) {
+                            return ""
+                        }
+                    },
+                    clickPopup: function (e, cell) {
+                        let data = cell.getValue()
+                        return Object.entries(data || {})
+                            .map(([key, value]) => {
+                                let date = key.split("-")[0];
+                                return `${date} --> ₹${value}`;
+                            })
+                            .join("<br>");
+                    }
+                },
+                { title: "Paid Month", field: "Paid Month" },
+            ]
+        });
+
+    }
+    
+    reloadIcon[0].addEventListener('click', () => {
+        reloadIcon[0].classList.add('icon-simple-rotation');
+        reloadIcon[0].setAttribute('name', 'aperture-outline');
+        table.replaceData('http://127.0.0.1:5000/reload').then(() => {
+            reloadIcon[0].classList.remove('icon-simple-rotation');
+            reloadIcon[0].setAttribute('name', 'reload-circle-outline');
+        })
+    })
+
+    excelIcon.addEventListener('click',()=>{
+        table.download("xlsx", "data.xlsx", {sheetName:"mainSheet"}); //download a xlsx file that has a sheet name of "MyData"
+    })
+
+    filter = []
+
+    nameField.addEventListener('keyup', key=>{
+        let latestValue = document.getElementById('name-field')
+        // console.log(latestValue.value)
+        filter.push({field:'Name', type:'like', value: latestValue.value})
+        table.setFilter(filter)
+        filter.pop({field:'Name', type:'like', value: latestValue.value})
+        console.log(filter)
+    })
+
+    classField.addEventListener('input',key=>{
+        filter.push({field:'Class', type:'=', value:key.srcElement.value})
+        table.setFilter(filter)
+        console.log(filter)
+    })
+</script>
+{%endblock%}

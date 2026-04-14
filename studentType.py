@@ -1,13 +1,19 @@
 import time
 from pymongo import MongoClient
+from bson.objectid import ObjectId
+import os
+from dotenv import load_dotenv, dotenv_values
 
-client = MongoClient('mongodb+srv://khc07979_db_user:5Ld8806ZCHOuayLp@claust.3gj3ip7.mongodb.net/?appName=Claust')
+load_dotenv()
+client = MongoClient(os.getenv('mongo_db'))
 db = client['Management-database']
 freightVillages = db['FreightVillages']
 admission = db['admission']
 
 normalMonth = ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sep","Oct","Nov","Dec"]
 schoolMonth = ["Apr","May","June","July","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"]
+
+monthNames = [None, 'Apr','May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
 
 def currentDate():
     date = f"{time.localtime().tm_mday}/{time.localtime().tm_mon}/{time.localtime().tm_year}"
@@ -24,9 +30,9 @@ def checkStudentType(student_type):
     if student_type == 'new':
         current = time.localtime()
 
-        # currentMonNum = current.tm_mon - 1
+        currentMonNum = current.tm_mon - 1
 # This is a testing line used for months but by default it will be the current month using time module
-        currentMonNum = 5
+        # currentMonNum = 5
 
         currentMonLet = normalMonth[currentMonNum]
 
@@ -39,7 +45,7 @@ def checkStudentType(student_type):
         return [12, 0]
     
 def monthIntext(number):
-    Month = schoolMonth[number-1]
+    Month = monthNames[number]
     return Month
 
 def NormaliseText(text):
@@ -65,8 +71,9 @@ def Fright(fright, *village):
     else:
         return None
 
-def DepositOnMongo(name, standard, DepoAmount, Manualdate=None):
-    response = admission.find_one({"Name":name,"Class":standard})
+
+def DepositOnMongo(ID, DepoAmount, Manualdate=None):
+    response = admission.find_one({"_id":ID})
     date = currentDate()
     try:
         PreviousDeposit = response["Deposit"]
@@ -83,14 +90,14 @@ def DepositOnMongo(name, standard, DepoAmount, Manualdate=None):
             matched=matched+1
         tempDict.update({f"{finalDate}-{letterIncrement(str(matched+1))}":DepoAmount})
 
-        admission.find_one_and_update({"Name":name,"Class":standard},{"$set": {"Deposit": tempDict}})
+        admission.find_one_and_update({"_id":ID},{"$set": {"Deposit": tempDict}})
         return tempDict
     except:
-        result = admission.find_one_and_update({"Name":name,"Class":standard},{"$set": {"Deposit": {f"{date}-01":DepoAmount}}})
+        result = admission.find_one_and_update({"_id":ID},{"$set": {"Deposit": {f"{date}-01":DepoAmount}}})
         return result
 
-def FetchPreviousDeposit(name, standard):
-    TempObject = admission.find_one({"Name":name,"Class":standard})
+def FetchPreviousDeposit(ID):
+    TempObject = admission.find_one({"_id":ID})
     totalDeposit = 0
     try:
         fetched = TempObject['Deposit']
@@ -100,21 +107,28 @@ def FetchPreviousDeposit(name, standard):
     except:
         return 0
     
-def FetchBalance(name, standard):
-    TempObject = admission.find_one({"Name":name,"Class":standard})
-    totalBalance = 0
+def FetchBalance(ID):
+    TempObject = admission.find_one({"_id":ID})
     try:
         fetched = TempObject['Balance']
-        for keys in fetched:
-            totalBalance = totalBalance+fetched[keys]
-        return totalBalance
+        return fetched
     except:
         return 0
-    
-def FetchPaidMonth(name, standard):
-    TempObj = admission.find_one({"Name":name,"Class":standard})
+
+def FetchPaidMonth(ID):
+    TempObj = admission.find_one({"_id":ID})
     paidMonth = TempObj['Paid Month']
     return paidMonth
+
+def FetchFreight(ID):
+    TempObj = admission.find_one({"_id":ID})
+    Freight = None
+    try:
+        Freight = TempObj['Freight']
+    except:
+        Freight = 0
+    return Freight
+
 
 
 
