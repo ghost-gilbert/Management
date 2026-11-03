@@ -7,8 +7,10 @@ from supplementaryFunctions import MCDTH
 import json
 from bson.objectid import ObjectId
 from fileHandeling import modifyName, saveCertificate
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 msgKeyPoint = ['success', 'error', 'message']
 # {"Data Feeded Successfully":"success","No Data Found":"error","The system wants to tell something":"message"}

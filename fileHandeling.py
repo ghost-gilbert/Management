@@ -2,7 +2,7 @@ import os
 from PIL import Image
 from io import BytesIO
 
-homeDirectory = os.environ['HOME']
+homeDirectory = os.path.expanduser('~')
 
 try:
     os.mkdir(f"{homeDirectory}/Documents/School Data/income-certificate")
